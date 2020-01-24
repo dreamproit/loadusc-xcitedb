@@ -1,0 +1,10 @@
+.DS_Store
+.vscode
+config.py
+node_modules
+dist
+__pycache__
+*.pyc
+*.log
+*.egg-info
+

@@ -1,0 +1,52 @@
+# loadusc
+Package to load all release-points of the United States Code as versions in XCiteDB
+
+## Install Python 3.7, as a pyenv virtualenv named `v37`
+
+## Install this package
+To install from this directory, `pip install -e ./`
+
+## Download releasepoints
+
+Download all USC releasepoints into a directory called `USC_RELEASEPOINTS` with:
+
+`$ python downloadusc.py `
+
+This does two things:
+ 
+    * Download the releasepoints, each in its directory, to the `constants.USC_RELEASEPOINTS` directory
+    * Create a file in JSON format at constants.USC_RELEASEPOINT_JSON_PATH (`USC_RELEASEPOINTS/uscreleasepoints.json`)
+    This JSON is an array of objects, each of the form:
+    
+    ```json
+    {"name": "116-91", "date": "12/19/2019", "titlesAffected": ["18", "20", "26"], "url": "https://uscode.house.gov/download/releasepoints/us/pl/116/91/xml_uscAll@116-91.zip"}, 
+    ```
+
+## Load releasepoints into XCiteDB
+
+`$ python loaduscxcite.py `
+
+This reads the releasepoints list from `uscreleasepoints.json` and loads the titles from each directory to XCiteDB 
+
+## Install a chronjob to download and update the USC nightly, if anything has changed
+
+* Copy this directory (the top level `loadusc`) into `/main/loadusc` 
+The path to `setup.py` will be `/main/loadusc/setup.py` and the shell script will be `/main/loadusc/updateusc.sh`
+
+* Check if cron package is installed:
+
+`$dpkg -l cron`  (Ubuntu)
+
+* If cron is not installed, install the cron package:
+
+`$ apt-get install cron` (Ubuntu)
+
+* Verify if cron service is running:
+`systemctl status cron`
+
+* Configure cron job:
+
+Edit `/etc/crontab` (`$ crontab -e`)
+Add the following line to run the script every day at 2a.m.:
+
+`0 2 * * * /path/to/updateusc.sh`
