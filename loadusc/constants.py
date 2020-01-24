@@ -47,7 +47,7 @@ XMLDBPATH = os.path.abspath(XMLDB_PATH)
 
 XMLDBPATH = os.path.abspath(XMLDB_PATH)
 
-DATA_PATH = os.path.join(MAIN_ROOT_PATH, 'html', 'versions', 'loadusc', 'data')
+DATA_PATH = os.path.join(MAIN_ROOT_PATH, 'loadusc', 'data')
 if not os.path.isdir(DATA_PATH):
     raise Exception('The data directory not found at:' +
                     DATA_PATH + '.')
