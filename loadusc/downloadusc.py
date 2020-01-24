@@ -29,7 +29,16 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 
-def getAndUnzipURL(url, dir_name, titlesAffected=['All'], redownload=False):
+def getAndUnzipURL(url: string, dir_name: str, titlesAffected: list=['All'], redownload: bool=False):
+    """
+    Given a url downlowd zip file for a U.S. Code title
+
+    Args:
+        url (string): url location for the .zip 
+        dir_name (str): name of the directory to download 
+        titlesAffected (list, optional): list of titles of the USC affected by the releasepoint. Defaults to ['All'].
+        redownload (bool, optional): replace existind releasepoint, if it exists in local directory. Defaults to False.
+    """
     print('Getting USC updates for: ' + url)
     if not os.path.exists(dir_name) or redownload:
         for title in titlesAffected:
@@ -65,11 +74,20 @@ def getAndUnzipURL(url, dir_name, titlesAffected=['All'], redownload=False):
         print(dir_name + ' already exists')
 
 
-def getDirName(url):
+def getDirName(url: str):
+    """
+    Gets the directory name from the download url
+    
+    Args:
+        url (str): the url where the USC releasepoint zip is stored
+    
+    Returns:
+        str: the directory name corresponding to this releasepoint 
+    """
     return url.split('@')[1].split('.')[0]
 
 
-def getReleaseDate(urlText):
+def getReleaseDate(urlText: str):
     try:
         releaseDate = re.search(r'([0-9]{2}\/[0-9]{2}\/[0-9]{4})', urlText).group(0)
     except:
@@ -77,14 +95,14 @@ def getReleaseDate(urlText):
     return releaseDate
 
 
-def getTitlesAffected(urlText):
+def getTitlesAffected(urlText: str):
     titlesAffected = re.search(
         r'affecting\stitles?(.*)\.?$', urlText).group(1).strip().replace(
             '.', '').replace('and', ',').replace(' ', '').split(',')
     return [item for item in titlesAffected if item]
 
 
-def getUSCReleasePoints(writeToFile=True):
+def getUSCReleasePoints(writeToFile: bool=True):
     # Get current release point, linked from https://uscode.house.gov/download/download.shtml, 
     # e.g. https://uscode.house.gov/download/releasepoints/us/pl/116/65/xml_uscAll@116-65.zip
     current_usc_html_resp = requests.get(USC_HTML_PAGE_BASE + CURRENT_USC_HTML_PAGE)
@@ -152,7 +170,7 @@ def getUSCReleasePoints(writeToFile=True):
     #           continue
 
 
-def downloadUSCReleasepointZips(redownload=False):
+def downloadUSCReleasepointZips(redownload: bool=False):
     releasepoints = getUSCReleasePoints()
     for index, releasepoint in enumerate(releasepoints, start=1):
         url = releasepoint.get('url')
@@ -164,7 +182,7 @@ def downloadUSCReleasepointZips(redownload=False):
     getAndUnzipURL(url, dir_name, titlesAffected=['All'], redownload=redownload)
 
 
-def processUSCReleasePoints(download=True, redownload=False, loglevel='DEBUG'):
+def processUSCReleasePoints(download: bool=True, redownload: bool=False, loglevel: str='DEBUG'):
     '''
     Process USC Release Points from uscode.house.gov
     '''
