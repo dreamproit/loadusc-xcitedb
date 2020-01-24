@@ -103,8 +103,17 @@ def getTitlesAffected(urlText: str):
 
 
 def getUSCReleasePoints(writeToFile: bool=True):
-    # Get current release point, linked from https://uscode.house.gov/download/download.shtml, 
-    # e.g. https://uscode.house.gov/download/releasepoints/us/pl/116/65/xml_uscAll@116-65.zip
+    """
+    Get current release point, linked from https://uscode.house.gov/download/download.shtml, 
+    e.g. https://uscode.house.gov/download/releasepoints/us/pl/116/65/xml_uscAll@116-65.zip
+    
+    Args:
+        writeToFile (bool, optional): [description]. Defaults to True.
+    
+    Returns:
+        list: a list of dicts with the url, date and other information for each releasepoint 
+    """
+
     current_usc_html_resp = requests.get(USC_HTML_PAGE_BASE + CURRENT_USC_HTML_PAGE)
     if (current_usc_html_resp.status_code == 200):
         current_soup = BeautifulSoup(current_usc_html_resp.content, features="lxml")
@@ -171,6 +180,12 @@ def getUSCReleasePoints(writeToFile: bool=True):
 
 
 def downloadUSCReleasepointZips(redownload: bool=False):
+    """
+    Gets the list of releasepoints, downloads .zip files and unzips them
+    
+    Args:
+        redownload (bool, optional): replace existing directory for releasepoint, if it exists. Defaults to False.
+    """
     releasepoints = getUSCReleasePoints()
     for index, releasepoint in enumerate(releasepoints, start=1):
         url = releasepoint.get('url')
