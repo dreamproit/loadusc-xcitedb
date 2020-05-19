@@ -29,12 +29,12 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 
-def getAndUnzipURL(url: string, dir_name: str, titlesAffected: list=['All'], redownload: bool=False):
+def getAndUnzipURL(url: str, dir_name: str, titlesAffected: list=['All'], redownload: bool=False):
     """
     Given a url downlowd zip file for a U.S. Code title
 
     Args:
-        url (string): url location for the .zip 
+        url (str): url location for the .zip 
         dir_name (str): name of the directory to download 
         titlesAffected (list, optional): list of titles of the USC affected by the releasepoint. Defaults to ['All'].
         redownload (bool, optional): replace existind releasepoint, if it exists in local directory. Defaults to False.
