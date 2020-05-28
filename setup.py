@@ -5,7 +5,7 @@ with open("README.adoc", "r") as fh:
 
 setuptools.setup(
     name="loadusc-aih",
-    version="0.0.8",
+    version="0.0.9",
     author="Ari Hershowitz",
     author_email="arihershowitz@gmail.com",
     description="Utilities to scrape and load USC releasepoints into XML database",

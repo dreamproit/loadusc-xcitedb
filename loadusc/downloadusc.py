@@ -237,6 +237,13 @@ if __name__ == '__main__':
         dest='loglevel',
         default='ERROR',
         help='Set the debug level (default: %(default)s)')
+    parser.add_argument(
+        '-r',
+        '--redownload',
+        action='store',
+        dest='redownload',
+        default=False,
+        help='Replace any existing files with new download (default: %(default)s)')
 
     args = parser.parse_args()
 
