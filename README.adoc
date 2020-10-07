@@ -3,6 +3,8 @@ Package to load all release-points of the United States Code as versions in XCit
 
 ## Install Python 3.7, as a pyenv virtualenv named `v37`
 
+To install pyenv on Centos: https://gist.github.com/ysaotome/7956676
+
 ## Install this package
 To install from this directory, `pip install -e ./`
 
