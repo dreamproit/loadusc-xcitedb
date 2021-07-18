@@ -15,6 +15,7 @@ import subprocess
 import logging
 import json
 import argparse
+from typing import List
 
 try:
     from constants import USC_RELEASEPOINT_DIRPATH, USC_RELEASEPOINT_JSON_PATH, USC_HTML_PAGE_BASE, USC_HTML_PAGE, CURRENT_USC_HTML_PAGE, USC_RP_TEXT, USC_XML_TEXT
@@ -29,7 +30,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 
-def getAndUnzipURL(url: str, dir_name: str, titlesAffected: list=['All'], redownload: bool=False):
+def getAndUnzipURL(url: str, dir_name: str, titlesAffected: List=['All'], redownload: bool=False):
     """
     Given a url downlowd zip file for a U.S. Code title
 
@@ -122,10 +123,14 @@ def getUSCReleasePoints(writeToFile: bool=True):
         return
 
     title_h3 = current_soup.find('h3', attrs={'class': 'releasepointinformation'})
-    release_date = getReleaseDate(title_h3.getText())
+    release_date = None
+    if title_h3:
+        release_date = getReleaseDate(title_h3.getText())
     current_name_div = current_soup.findAll('div', attrs={'class', 'uscitem'})[1].find('div', attrs={'class': 'itemcurrency'})
     if current_name_div:
         current_name = current_name_div.getText().strip()
+    else:
+        current_name = ''
     titles_affected_divs = current_soup.findAll('div', attrs={'class': 'usctitlechanged'})
     if titles_affected_divs and len(titles_affected_divs) > 0:
         titlesAffected = [t.attrs.get('id').replace('us/usc/t', '') for t in titles_affected_divs] 
@@ -135,6 +140,8 @@ def getUSCReleasePoints(writeToFile: bool=True):
     downloadlinks_div = current_soup.find('div', attrs={'class': 'itemdownloadlinks'}).find('a')
     if downloadlinks_div:
         downloadlink = downloadlinks_div.attrs.get('href')
+    else:
+        downloadlink = ''
 
     current_releasepoint = {
             'name': current_name,
