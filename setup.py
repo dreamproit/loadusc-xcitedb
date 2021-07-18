@@ -13,7 +13,7 @@ setuptools.setup(
     long_description_content_type="text/asciidoc",
     install_requires=[
         "requests==2.22.0",
-        "lxml==4.4.1",
+        "lxml==4.6.3",
         "beautifulsoup4==4.8.0",
         "pymongo==3.9.0"
     ],

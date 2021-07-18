@@ -21,7 +21,7 @@ DEFAULT_MAIN_ROOT_PATH = os.path.join(os.path.sep, 'main')
 # Root path for XCiteDB
 MAIN_ROOT_PATH = os.environ.get('MAIN_ROOT_PATH')
 DEFAULT_XMLDB_PATH = os.path.join(MAIN_ROOT_PATH, 'data_versions', 'xmldb')
-if not MAIN_ROOT_PATH or not os.path.isdir(DEFAULT_XMLDB_PATH):
+if not MAIN_ROOT_PATH or not os.path.isdir(MAIN_ROOT_PATH):
     if not os.path.isdir(DEFAULT_MAIN_ROOT_PATH):
         raise Exception(
             'MAIN_ROOT_PATH is not set. Please set MAIN_ROOT_PATH as an environment variable.'
