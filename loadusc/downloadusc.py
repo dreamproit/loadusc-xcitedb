@@ -32,7 +32,7 @@ logger.addHandler(logging.StreamHandler(sys.stdout))
 
 def getAndUnzipURL(url: str, dir_name: str, titlesAffected: List=['All'], redownload: bool=False):
     """
-    Given a url downlowd zip file for a U.S. Code title
+    Given a url download zip file for a U.S. Code title
 
     Args:
         url (str): url location for the .zip 
@@ -68,7 +68,7 @@ def getAndUnzipURL(url: str, dir_name: str, titlesAffected: List=['All'], redown
                 try:
                     z = zipfile.ZipFile(io.BytesIO(r.content))
                 except Exception as err:
-                    print('Could not unzip: ' + err)
+                    print('Could not unzip: ' + str(err))
                     continue
                 z.extractall(dir_name)
     else:
