@@ -49,17 +49,17 @@ def getAndUnzipURL(url: str, dir_name: str, titlesAffected: List=['All'], redown
                 title = '0' + title
             print('Getting title: ' + title)
             url = re.sub(r"_usc.*@", "_usc" + title + "@", url)
-            r = requests.get(url, stream=True)
+            r = requests.get(url, stream=True, verify=False)
             check = zipfile.is_zipfile(io.BytesIO(r.content))
             attempts = 0
             while not check:
                 print('Trying to get url...')
                 if(url.find('u1.zip')>0):
                     url2 = url.replace('u1.zip', '.zip')
-                    r = requests.get(url2, stream=True)
+                    r = requests.get(url2, stream=True, verify=False)
                     check = zipfile.is_zipfile(io.BytesIO(r.content))
                 if not check:
-                    r = requests.get(url, stream=True)
+                    r = requests.get(url, stream=True, verify=False)
                     check = zipfile.is_zipfile(io.BytesIO(r.content))
                 attempts += 1
                 if attempts == URL_ATTEMPTS_MAX:
@@ -151,7 +151,7 @@ def getUSCReleasePoints(writeToFile: bool=True):
             'url': USC_HTML_PAGE_BASE + downloadlink 
         }
 
-    usc_html_resp = requests.get(USC_HTML_PAGE_BASE + USC_HTML_PAGE)
+    usc_html_resp = requests.get(USC_HTML_PAGE_BASE + USC_HTML_PAGE, verify=False)
     if (usc_html_resp.status_code == 200):
         soup = BeautifulSoup(usc_html_resp.content, features="lxml")
     else:
