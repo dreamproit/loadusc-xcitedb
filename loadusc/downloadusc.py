@@ -43,7 +43,7 @@ def getAndUnzipURL(url: str, dir_name: str, titlesAffected: List=['All'], redown
     print('Getting USC updates for: ' + url)
     if not os.path.exists(dir_name) or redownload:
         for title in titlesAffected:
-            if title is not 'All':
+            if title != 'All':
                 title = title.lower()
             if len(title.replace('a', '')) == 1:
                 title = '0' + title
