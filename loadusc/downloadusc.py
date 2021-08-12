@@ -115,7 +115,8 @@ def getUSCReleasePoints(writeToFile: bool=True):
         list: a list of dicts with the url, date and other information for each releasepoint 
     """
 
-    current_usc_html_resp = requests.get(USC_HTML_PAGE_BASE + CURRENT_USC_HTML_PAGE)
+    # Turn off certificate verification since uscode.house.gov uses self-signed certificates
+    current_usc_html_resp = requests.get(USC_HTML_PAGE_BASE + CURRENT_USC_HTML_PAGE, verify=False)
     if (current_usc_html_resp.status_code == 200):
         current_soup = BeautifulSoup(current_usc_html_resp.content, features="lxml")
     else:
