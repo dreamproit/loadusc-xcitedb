@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 'Scrape USC release points'
 
-# Sample release point link: https://uscode.house.gov/download/releasepoints/us/pl/115/239not232/usc-rp@115-239not232.htm
+# Sample release point link: https://uscode.house.gov/download/releasepoints/us/pl/115/239not232/usc-rp@115-239not232.htm # noqa
 
 import zipfile
 import re
@@ -11,16 +11,31 @@ import sys
 import os
 from bs4 import BeautifulSoup
 import requests
-import subprocess
 import logging
 import json
 import argparse
 from typing import List
 
 try:
-    from constants import USC_RELEASEPOINT_DIRPATH, USC_RELEASEPOINT_JSON_PATH, USC_HTML_PAGE_BASE, USC_HTML_PAGE, CURRENT_USC_HTML_PAGE, USC_RP_TEXT, USC_XML_TEXT
-except:
-    from loadusc.constants import USC_RELEASEPOINT_DIRPATH, USC_RELEASEPOINT_JSON_PATH, USC_HTML_PAGE_BASE, USC_HTML_PAGE, CURRENT_USC_HTML_PAGE, USC_RP_TEXT, USC_XML_TEXT
+    from constants import (
+        USC_RELEASEPOINT_DIRPATH,
+        USC_RELEASEPOINT_JSON_PATH,
+        USC_HTML_PAGE_BASE,
+        USC_HTML_PAGE,
+        CURRENT_USC_HTML_PAGE,
+        USC_RP_TEXT,
+        USC_XML_TEXT,
+    )
+except ImportError:
+    from loadusc.constants import (
+        USC_RELEASEPOINT_DIRPATH,
+        USC_RELEASEPOINT_JSON_PATH,
+        USC_HTML_PAGE_BASE,
+        USC_HTML_PAGE,
+        CURRENT_USC_HTML_PAGE,
+        USC_RP_TEXT,
+        USC_XML_TEXT,
+    )
 
 
 URL_ATTEMPTS_MAX = 20
@@ -30,13 +45,15 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 
-def getAndUnzipURL(url: str, dir_name: str, titlesAffected: List=['All'], redownload: bool=False):
+def getAndUnzipURL(
+    url: str, dir_name: str, titlesAffected: List = ['All'], redownload: bool = False
+):
     """
     Given a url download zip file for a U.S. Code title
 
     Args:
-        url (str): url location for the .zip 
-        dir_name (str): name of the directory to download 
+        url (str): url location for the .zip
+        dir_name (str): name of the directory to download
         titlesAffected (list, optional): list of titles of the USC affected by the releasepoint. Defaults to ['All'].
         redownload (bool, optional): replace existind releasepoint, if it exists in local directory. Defaults to False.
     """
@@ -54,7 +71,7 @@ def getAndUnzipURL(url: str, dir_name: str, titlesAffected: List=['All'], redown
             attempts = 0
             while not check:
                 print('Trying to get url...')
-                if(url.find('u1.zip')>0):
+                if url.find('u1.zip') > 0:
                     url2 = url.replace('u1.zip', '.zip')
                     r = requests.get(url2, stream=True, verify=False)
                     check = zipfile.is_zipfile(io.BytesIO(r.content))
@@ -78,12 +95,12 @@ def getAndUnzipURL(url: str, dir_name: str, titlesAffected: List=['All'], redown
 def getDirName(url: str):
     """
     Gets the directory name from the download url
-    
+
     Args:
         url (str): the url where the USC releasepoint zip is stored
-    
+
     Returns:
-        str: the directory name corresponding to this releasepoint 
+        str: the directory name corresponding to this releasepoint
     """
     return url.split('@')[1].split('.')[0]
 
@@ -91,33 +108,42 @@ def getDirName(url: str):
 def getReleaseDate(urlText: str):
     try:
         releaseDate = re.search(r'([0-9]{2}\/[0-9]{2}\/[0-9]{4})', urlText).group(0)
-    except:
+    except Exception as exc:
+        logger.exception(exc)
         releaseDate = None
     return releaseDate
 
 
 def getTitlesAffected(urlText: str):
-    titlesAffected = re.search(
-        r'affecting\stitles?(.*)\.?$', urlText).group(1).strip().replace(
-            '.', '').replace('and', ',').replace(' ', '').split(',')
+    titlesAffected = (
+        re.search(r'affecting\stitles?(.*)\.?$', urlText)
+        .group(1)
+        .strip()
+        .replace('.', '')
+        .replace('and', ',')
+        .replace(' ', '')
+        .split(',')
+    )
     return [item for item in titlesAffected if item]
 
 
-def getUSCReleasePoints(writeToFile: bool=True):
+def getUSCReleasePoints(writeToFile: bool = True):
     """
-    Get current release point, linked from https://uscode.house.gov/download/download.shtml, 
+    Get current release point, linked from https://uscode.house.gov/download/download.shtml,
     e.g. https://uscode.house.gov/download/releasepoints/us/pl/116/65/xml_uscAll@116-65.zip
-    
+
     Args:
         writeToFile (bool, optional): [description]. Defaults to True.
-    
+
     Returns:
-        list: a list of dicts with the url, date and other information for each releasepoint 
+        list: a list of dicts with the url, date and other information for each releasepoint
     """
 
     # Turn off certificate verification since uscode.house.gov uses self-signed certificates
-    current_usc_html_resp = requests.get(USC_HTML_PAGE_BASE + CURRENT_USC_HTML_PAGE, verify=False)
-    if (current_usc_html_resp.status_code == 200):
+    current_usc_html_resp = requests.get(
+        USC_HTML_PAGE_BASE + CURRENT_USC_HTML_PAGE, verify=False
+    )
+    if current_usc_html_resp.status_code == 200:
         current_soup = BeautifulSoup(current_usc_html_resp.content, features="lxml")
     else:
         print('Could not get page from: ' + USC_HTML_PAGE_BASE + USC_HTML_PAGE)
@@ -127,32 +153,40 @@ def getUSCReleasePoints(writeToFile: bool=True):
     release_date = None
     if title_h3:
         release_date = getReleaseDate(title_h3.getText())
-    current_name_div = current_soup.findAll('div', attrs={'class', 'uscitem'})[1].find('div', attrs={'class': 'itemcurrency'})
+    current_name_div = current_soup.findAll('div', attrs={'class', 'uscitem'})[1].find(
+        'div', attrs={'class': 'itemcurrency'}
+    )
     if current_name_div:
         current_name = current_name_div.getText().strip()
     else:
         current_name = ''
-    titles_affected_divs = current_soup.findAll('div', attrs={'class': 'usctitlechanged'})
+    titles_affected_divs = current_soup.findAll(
+        'div', attrs={'class': 'usctitlechanged'}
+    )
     if titles_affected_divs and len(titles_affected_divs) > 0:
-        titlesAffected = [t.attrs.get('id').replace('us/usc/t', '') for t in titles_affected_divs] 
+        titlesAffected = [
+            t.attrs.get('id').replace('us/usc/t', '') for t in titles_affected_divs
+        ]
     else:
         titlesAffected = []
 
-    downloadlinks_div = current_soup.find('div', attrs={'class': 'itemdownloadlinks'}).find('a')
+    downloadlinks_div = current_soup.find(
+        'div', attrs={'class': 'itemdownloadlinks'}
+    ).find('a')
     if downloadlinks_div:
         downloadlink = downloadlinks_div.attrs.get('href')
     else:
         downloadlink = ''
 
     current_releasepoint = {
-            'name': current_name,
-            'date': release_date, 
-            'titlesAffected': titlesAffected,
-            'url': USC_HTML_PAGE_BASE + downloadlink 
-        }
+        'name': current_name,
+        'date': release_date,
+        'titlesAffected': titlesAffected,
+        'url': USC_HTML_PAGE_BASE + downloadlink,
+    }
 
     usc_html_resp = requests.get(USC_HTML_PAGE_BASE + USC_HTML_PAGE, verify=False)
-    if (usc_html_resp.status_code == 200):
+    if usc_html_resp.status_code == 200:
         soup = BeautifulSoup(usc_html_resp.content, features="lxml")
     else:
         print('Could not get page from: ' + USC_HTML_PAGE_BASE + USC_HTML_PAGE)
@@ -160,17 +194,15 @@ def getUSCReleasePoints(writeToFile: bool=True):
     downloadLinks = soup.findAll('a', attrs={'class': 'releasepoint'})
     releasepoints = [
         {
-            'name':
-            getDirName(link.attrs.get('href')),
-            'date':
-            getReleaseDate(link.getText()),
-            'titlesAffected':
-            getTitlesAffected(link.getText()),
-            'url':
-            USC_HTML_PAGE_BASE + re.sub(r"\.html?$", ".zip",
-                                        link.attrs.get('href')).replace(
-                                            USC_RP_TEXT, USC_XML_TEXT)
-        } for link in downloadLinks
+            'name': getDirName(link.attrs.get('href')),
+            'date': getReleaseDate(link.getText()),
+            'titlesAffected': getTitlesAffected(link.getText()),
+            'url': USC_HTML_PAGE_BASE
+            + re.sub(r"\.html?$", ".zip", link.attrs.get('href')).replace(
+                USC_RP_TEXT, USC_XML_TEXT
+            ),
+        }
+        for link in downloadLinks
         if re.search(r'([0-9]{2}\/[0-9]{2}\/[0-9]{2})', link.getText())
     ]
     releasepoints.insert(0, current_releasepoint)
@@ -183,29 +215,35 @@ def getUSCReleasePoints(writeToFile: bool=True):
 
     return releasepoints
 
-    #else: print('Could not download releasepoint at: ' + url)
+    # else: print('Could not download releasepoint at: ' + url)
     #           continue
 
 
-def downloadUSCReleasepointZips(redownload: bool=False):
+def downloadUSCReleasepointZips(redownload: bool = False):
     """
     Gets the list of releasepoints, downloads .zip files and unzips them
-    
+
     Args:
         redownload (bool, optional): replace existing directory for releasepoint, if it exists. Defaults to False.
     """
     releasepoints = getUSCReleasePoints()
     for index, releasepoint in enumerate(releasepoints, start=1):
         url = releasepoint.get('url')
-        if url and index!=len(releasepoints):
-            dir_name = os.path.join(USC_RELEASEPOINT_DIRPATH,
-                                    releasepoint.get('name'))
-            getAndUnzipURL(url, dir_name, titlesAffected=releasepoint.get('titlesAffected'), redownload=redownload)
+        if url and index != len(releasepoints):
+            dir_name = os.path.join(USC_RELEASEPOINT_DIRPATH, releasepoint.get('name'))
+            getAndUnzipURL(
+                url,
+                dir_name,
+                titlesAffected=releasepoint.get('titlesAffected'),
+                redownload=redownload,
+            )
     # Download all titles for the oldest releasepoint
     getAndUnzipURL(url, dir_name, titlesAffected=['All'], redownload=redownload)
 
 
-def processUSCReleasePoints(download: bool=True, redownload: bool=False, loglevel: str='DEBUG'):
+def processUSCReleasePoints(
+    download: bool = True, redownload: bool = False, loglevel: str = 'DEBUG'
+):
     '''
     Process USC Release Points from uscode.house.gov
     '''
@@ -235,23 +273,25 @@ def processUSCReleasePoints(download: bool=True, redownload: bool=False, logleve
     if download:
         downloadUSCReleasepointZips(redownload=redownload)
 
+
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
-        description='Download USC versions.', epilog='')
+    parser = argparse.ArgumentParser(description='Download USC versions.', epilog='')
     parser.add_argument(
         '-d',
         '--debug',
         action='store',
         dest='loglevel',
         default='ERROR',
-        help='Set the debug level (default: %(default)s)')
+        help='Set the debug level (default: %(default)s)',
+    )
     parser.add_argument(
         '-r',
         '--redownload',
         action='store',
         dest='redownload',
         default=False,
-        help='Replace any existing files with new download (default: %(default)s)')
+        help='Replace any existing files with new download (default: %(default)s)',
+    )
 
     args = parser.parse_args()
 
