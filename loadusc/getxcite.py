@@ -3,21 +3,33 @@
 'Get nodes from XCiteDB XML database'
 
 import sys
-try:
-    import re2 as re
-except:
-    import re
 
 import logging
 import subprocess
 import json
-from io import StringIO
 from datetime import datetime
 
 try:
-    from constants import XCITEDBPATH, XMLDBPATH, SEC_REGEX, FULL_SEC_REGEX, TOC_REGEX, IDENTIFIER_TYPE_REGEX, USC_REGEX, NAMED_LAW_REGEX, BILLNUMBER_REGEX
-except:
-    from loadusc.constants import XCITEDBPATH, XMLDBPATH, SEC_REGEX, FULL_SEC_REGEX, TOC_REGEX, IDENTIFIER_TYPE_REGEX, USC_REGEX, NAMED_LAW_REGEX, BILLNUMBER_REGEX
+    import re2 as re
+except ImportError:
+    import re
+
+try:
+    from constants import (
+        XCITEDBPATH,
+        XMLDBPATH,
+        IDENTIFIER_TYPE_REGEX,
+        USC_REGEX,
+        NAMED_LAW_REGEX,
+    )
+except ImportError:
+    from loadusc.constants import (
+        XCITEDBPATH,
+        XMLDBPATH,
+        IDENTIFIER_TYPE_REGEX,
+        USC_REGEX,
+        NAMED_LAW_REGEX,
+    )
 
 logging.basicConfig(filename='loadusc.log', filemode='w', level='INFO')
 logger = logging.getLogger(__name__)
@@ -28,18 +40,19 @@ def getIdentifier(identifier='', date=datetime.now()):
     """Returns a Dict containing an array of the node(s) corresponding to `identifier` at `dateString`.
 
     Args:
-        identifier (:obj:`str`): a string representation of the node to query 
-        date (:obj:`datetime.datetime`): A datetime object. This function converts it to  `mm/DD/YYYY` format to call XCiteDB. Defaults to `datetime.now()`.
+        identifier (:obj:`str`): a string representation of the node to query
+        date (:obj:`datetime.datetime`): A datetime object.
+        This function converts it to  `mm/DD/YYYY` format to call XCiteDB. Defaults to `datetime.now()`.
 
     Returns:
-        dict:  
-        
+        dict:
+
         The data returned from queries to XCiteDB, in the form::
 
             {
                 'success': True/False,
                 'message': 'Return warning, error or info',
-                'xmls': ['<xmlstring/>',...] 
+                'xmls': ['<xmlstring/>',...]
             }
     """
     respDict = {}
@@ -66,8 +79,7 @@ def getIdentifier(identifier='', date=datetime.now()):
         respDict['message'] = 'Identifier not in the expected form'
         return respDict
     identifierType = identifierSearch.group(1)
-    if (identifierType is None
-            or (identifierType not in ['pl', 'usc', 'named'])):
+    if identifierType is None or (identifierType not in ['pl', 'usc', 'named']):
         respDict['success'] = False
         respDict['message'] = 'Identifier must be of type pl, usc, or named'
         return respDict
@@ -75,15 +87,17 @@ def getIdentifier(identifier='', date=datetime.now()):
     # Remove biglevels if there is a section specified in PL
     if identifierType == 'pl':
         identifier = identifier.replace(
-            r'(\/us\/pl\/[0-9]+\/[0-9]+)\/(?:.*)(\/s[0-9].*$)', r'\1\2')
+            r'(\/us\/pl\/[0-9]+\/[0-9]+)\/(?:.*)(\/s[0-9].*$)', r'\1\2'
+        )
 
     if identifierType == 'named':
         namedSearch = re.search(NAMED_LAW_REGEX, identifier)
-        if (namedSearch.group(2)):
+        if namedSearch.group(2):
             queryTerms = [
                 '-match-start',
-                namedSearch.group(1), '-match-end',
-                namedSearch.group(2)
+                namedSearch.group(1),
+                '-match-end',
+                namedSearch.group(2),
             ]
         else:
             pass
@@ -92,16 +106,17 @@ def getIdentifier(identifier='', date=datetime.now()):
     if identifierType == 'usc':
         if not re.search(r'\/s[0-9]', identifier):
             uscSearch = re.search(USC_REGEX, identifier)
-            if (uscSearch.group(2)):
+            if uscSearch.group(2):
                 queryTerms = [
                     '-match-start',
-                    uscSearch.group(1), '-match-end',
-                    uscSearch.group(2)
+                    uscSearch.group(1),
+                    '-match-end',
+                    uscSearch.group(2),
                 ]
         else:
             identifier = re.sub(
-                r'(\/us\/usc\/t[0-9][^\/]*)\/(?:.*)(\/s[0-9].*$)', r'\1\2',
-                identifier)
+                r'(\/us\/usc\/t[0-9][^\/]*)\/(?:.*)(\/s[0-9].*$)', r'\1\2', identifier
+            )
 
     if queryTerms is None:
         queryTerms = ['-match', identifier]
@@ -129,14 +144,17 @@ def getIdentifier(identifier='', date=datetime.now()):
 
 
 def getChangeDates(identifier='', fromDate=None, toDate=None):
-    """Returns a list of the dates of change corresponding to `identifier` between `fromDate` and `toDate`. 
-    
-    Currently only supports PL or USC identifiers; named law identifiers may have a '-match-end' query which is incompatible with a full log. 
+    """Returns a list of the dates of change corresponding to `identifier` between `fromDate` and `toDate`.
+
+    Currently only supports PL or USC identifiers;
+    named law identifiers may have a '-match-end' query which is incompatible with a full log.
 
     Args:
-        identifier (:obj:`str`): a string representation of the node to query 
-        fromDate (:obj:`datetime.datetime`): A datetime object. This function converts it to  `mm/DD/YYYY` format to call XCiteDB. Defaults to None.
-        toDate (:obj:`datetime.datetime`): A datetime object. This function converts it to  `mm/DD/YYYY` format to call XCiteDB. Defaults to None.
+        identifier (:obj:`str`): a string representation of the node to query
+        fromDate (:obj:`datetime.datetime`): A datetime object.
+        This function converts it to  `mm/DD/YYYY` format to call XCiteDB. Defaults to None.
+        toDate (:obj:`datetime.datetime`): A datetime object.
+        This function converts it to  `mm/DD/YYYY` format to call XCiteDB. Defaults to None.
 
     Returns:
         list of Dicts (from XCiteDB log) of the form:
@@ -159,7 +177,8 @@ def getChangeDates(identifier='', fromDate=None, toDate=None):
     try:
         fromDateString = fromDate.strftime('%m/%d/%Y')
         toDateString = toDate.strftime('%m/%d/%Y')
-    except:
+    except Exception as exc:
+        logger.exception(exc)
         fromDateString = None
         toDateString = None
     queryTerms = None
@@ -173,7 +192,7 @@ def getChangeDates(identifier='', fromDate=None, toDate=None):
         respDict['message'] = 'Identifier not in the expected form'
         return respDict
     identifierType = identifierSearch.group(1)
-    if (identifierType is None or (identifierType not in ['usc'])):
+    if identifierType is None or (identifierType not in ['usc']):
         respDict['success'] = False
         respDict['message'] = 'Identifier must be of type pl or usc'
         return respDict
@@ -181,19 +200,21 @@ def getChangeDates(identifier='', fromDate=None, toDate=None):
     # Remove biglevels if there is a section specified in PL
     if identifierType == 'pl':
         identifier = identifier.replace(
-            r'(\/us\/pl\/[0-9]+\/[0-9]+)\/(?:.*)(\/s[0-9].*$)', r'\1\2')
+            r'(\/us\/pl\/[0-9]+\/[0-9]+)\/(?:.*)(\/s[0-9].*$)', r'\1\2'
+        )
 
     # Return if there is no section specified in USC
     if identifierType == 'usc':
         if not re.search(r'\/s[0-9]', identifier):
             respDict['success'] = False
             respDict[
-                'message'] = 'US Code identifier must include a section for changeDates query'
+                'message'
+            ] = 'US Code identifier must include a section for changeDates query'
             return respDict
         else:
             identifier = re.sub(
-                r'(\/us\/usc\/t[0-9][^\/]*)\/(?:.*)(\/s[0-9].*$)', r'\1\2',
-                identifier)
+                r'(\/us\/usc\/t[0-9][^\/]*)\/(?:.*)(\/s[0-9].*$)', r'\1\2', identifier
+            )
             identifier = identifier.rstrip('/') + '/'
 
     queryTermsMatch = ['-match', identifier.rstrip('/')]
@@ -201,8 +222,7 @@ def getChangeDates(identifier='', fromDate=None, toDate=None):
 
     queryList = [XCITEDBPATH, '-db', XMLDBPATH]
     if fromDateString and toDateString:
-        queryList.extend(
-            ['-from-date', fromDateString, '-to-date', toDateString])
+        queryList.extend(['-from-date', fromDateString, '-to-date', toDateString])
 
     queryTerms.insert(0, 'query')
     queryTermsMatch.insert(0, 'query')
@@ -224,9 +244,7 @@ def getChangeDates(identifier='', fromDate=None, toDate=None):
     queryListMatch.extend(queryTermsMatch)
     queryListMatch.append('-log')
     logger.info(str(queryListMatch))
-    dbqueryMatch = subprocess.run(queryListMatch,
-                                  timeout=60,
-                                  capture_output=True)
+    dbqueryMatch = subprocess.run(queryListMatch, timeout=60, capture_output=True)
     responseMatch = dbqueryMatch.stdout
     responseMatchErr = dbqueryMatch.stderr
     if responseMatchErr and len(responseMatchErr) > 0:

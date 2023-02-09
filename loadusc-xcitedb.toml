@@ -1,0 +1,16 @@
+[tool.flake8]
+max-line-length = 120
+exclude = [".git"]
+extend-ignore = ["E203", "W503"]
+
+[tool.black]
+skip-string-normalization = true
+
+[tool.isort]
+profile = 'black'
+multi_line_output=3
+indent='    '
+line_length=120
+from_first=1
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY"]
+include_trailing_comma = "True"

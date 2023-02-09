@@ -2,64 +2,79 @@
 # -*- coding: utf-8 -*-
 
 import os
+import enum
+from datetime import date
+
 try:
     import re2 as re
-except:
+except ImportError:
     import re
-from datetime import date 
 
-today = date.today() 
-TODAY_DD_MM_YYYY =  today.strftime("%d/%m/%Y") 
+today = date.today()
+TODAY_DD_MM_YYYY = today.strftime("%d/%m/%Y")
 DATE_REGEX = r'[1-3]?[0-9]\/[1-3]?[0-9]\/[1-2][0-9]{3}'
 DATE_REGEX_COMPILED = re.compile(DATE_REGEX)
-# in Linux-like systems the environment variables can be set for all users in /etc/profile:
-#export MAIN_ROOT_PATH='/main'
-#export XMLDB_PATH='/main/data_versions/xmldb'
 
-DEFAULT_MAIN_ROOT_PATH = os.path.join(os.path.sep, 'main')
+# in Linux-like systems the environment variables can be set for all users in /etc/profile:
+# export MAIN_ROOT_PATH='/main'
+# export XMLDBPATH='/main/data_versions/xmldb'
+
+
+class LOADUSC_XCiteDBConstants(enum.Enum):
+    """Constants for loadusc-xcitedb."""
+
+    ENV_NAME = 'dev_docker'
+
 
 # Root path for XCiteDB
 MAIN_ROOT_PATH = os.environ.get('MAIN_ROOT_PATH')
-DEFAULT_XMLDB_PATH = os.path.join(MAIN_ROOT_PATH, 'data_versions', 'xmldb')
-if not MAIN_ROOT_PATH or not os.path.isdir(MAIN_ROOT_PATH):
-    if not os.path.isdir(DEFAULT_MAIN_ROOT_PATH):
-        raise Exception(
-            'MAIN_ROOT_PATH is not set. Please set MAIN_ROOT_PATH as an environment variable.'
-        )
-    else:
-        MAIN_ROOT_PATH = DEFAULT_MAIN_ROOT_PATH
-        DEFAULT_XMLDB_PATH = os.path.join(MAIN_ROOT_PATH, 'data_versions', 'xmldb') 
-MAIN_ROOT_PATH = os.path.abspath(MAIN_ROOT_PATH)
+LOADUSC_XCiteDB_ENV_NAME = os.getenv('LOADUSC_XCiteDB_ENV_NAME', 'dev_local')
+XCITEDBPATH = (
+    os.path.join(
+        os.getenv('XCITEDB_TOOL_PATH', '/var/XCiteDB/XCiteDB/bin/Release/XCiteDB')
+    )
+    if LOADUSC_XCiteDB_ENV_NAME == LOADUSC_XCiteDBConstants.ENV_NAME.value
+    else os.path.abspath(
+        os.path.join(MAIN_ROOT_PATH, 'XCiteDB', 'XCiteDB', 'bin', 'Release', 'XCiteDB')
+    )
+)
 
-XCITEDBPATH = os.path.abspath(
-    os.path.join(MAIN_ROOT_PATH, 'XCiteDB', 'XCiteDB', 'bin', 'Release',
-                 'XCiteDB'))
+XMLDBPATH = os.getenv('XMLDBPATH', '/xml_dbs/xmldb')
 
-XMLDB_PATH = os.environ.get('XMLDB_PATH')
-if not XMLDB_PATH:
-    if not os.path.isdir(DEFAULT_XMLDB_PATH):
-        raise Exception(
-            'XMLDB_PATH is not set. Please set XMLDB_PATH as an environment variable.'
-        )
-    else:
-        XMLDB_PATH = DEFAULT_XMLDB_PATH
-XMLDBPATH = os.path.abspath(XMLDB_PATH)
-
-XMLDBPATH = os.path.abspath(XMLDB_PATH)
-
-DATA_PATH = os.path.join(MAIN_ROOT_PATH, 'loadusc', 'data')
+DATA_PATH = (
+    os.path.join(os.getenv('DATA_PATH', '/public/loadusc/data'))
+    if LOADUSC_XCiteDB_ENV_NAME == LOADUSC_XCiteDBConstants.ENV_NAME.value
+    else os.path.join(MAIN_ROOT_PATH, 'loadusc', 'data')
+)
 if not os.path.isdir(DATA_PATH):
-    raise Exception('The data directory not found at:' +
-                    DATA_PATH + '.')
+    raise Exception('The data directory not found at:' + DATA_PATH + '.')
 
-DOCCONFIGPATH = os.path.abspath(
-    os.path.join(DATA_PATH,
-                 'document.conf'))
+DOCCONFIGPATH = (
+    os.path.abspath(
+        os.path.join(
+            MAIN_ROOT_PATH, 'House-Amendment-Parse', 'natparser', 'src', 'document.conf'
+        )
+    )
+    if LOADUSC_XCiteDB_ENV_NAME == LOADUSC_XCiteDBConstants.ENV_NAME.value
+    else os.path.abspath(os.path.join(DATA_PATH, 'document.conf'))
+)
 
 META_JSON_PATH = os.path.join(DATA_PATH, 'billmeta.json')
 PUBLAWS_DICT_JSON_PATH = os.path.join(DATA_PATH, 'publawsDict.json')
-USC_RELEASEPOINT_DIRPATH = os.path.abspath(os.path.join(MAIN_ROOT_PATH, 'USC_RELEASEPOINTS'))
-USC_RELEASEPOINT_JSON_PATH = os.path.join(USC_RELEASEPOINT_DIRPATH, 'uscreleasepoints.json')
+
+USC_RELEASEPOINT_DIRPATH = (
+    os.path.abspath(
+        os.path.join(
+            DATA_PATH,
+            'USC_RELEASEPOINTS',
+        )
+    )
+    if LOADUSC_XCiteDB_ENV_NAME == LOADUSC_XCiteDBConstants.ENV_NAME.value
+    else os.path.abspath(os.path.join(MAIN_ROOT_PATH, 'USC_RELEASEPOINTS'))
+)
+USC_RELEASEPOINT_JSON_PATH = os.path.join(
+    USC_RELEASEPOINT_DIRPATH, 'uscreleasepoints.json'
+)
 
 USC_HTML_PAGE_BASE = 'https://uscode.house.gov/download/'
 CURRENT_USC_HTML_PAGE = "download.shtml"
