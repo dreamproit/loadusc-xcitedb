@@ -18,7 +18,7 @@ setuptools.setup(
         "pymongo==3.9.0",
         "flake8==6.0.0",
         "isort==5.10.1",
-        "black==22.10.0",
+        "black==24.3.0",
     ],
     url="https://github.com/aih/versions/loadusc",
     packages=setuptools.find_packages(),
