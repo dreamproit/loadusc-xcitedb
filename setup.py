@@ -15,7 +15,7 @@ setuptools.setup(
         "requests==2.31.0",
         "lxml==4.9.1",
         "beautifulsoup4==4.8.0",
-        "pymongo==3.9.0",
+        "pymongo==4.6.3",
         "flake8==6.0.0",
         "isort==5.10.1",
         "black==22.10.0",
