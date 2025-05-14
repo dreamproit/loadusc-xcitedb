@@ -36,7 +36,9 @@ except ImportError:
         USC_RP_TEXT,
         USC_XML_TEXT,
     )
-
+    
+# Disable InsecureRequestWarning warnings since uscode.house.gov uses self-signed certificates
+requests.packages.urllib3.disable_warnings(category=urllib3.exceptions.InsecureRequestWarning)
 
 URL_ATTEMPTS_MAX = 20
 
