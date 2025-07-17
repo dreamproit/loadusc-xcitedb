@@ -14,7 +14,9 @@ import requests
 import logging
 import json
 import argparse
+import warnings
 from typing import List
+from urllib3.exceptions import InsecureRequestWarning
 
 try:
     from constants import (
@@ -36,9 +38,30 @@ except ImportError:
         USC_RP_TEXT,
         USC_XML_TEXT,
     )
+
+class SSLWarningSuppressor:
+    def __init__(self, target_domains=None):
+        if target_domains is None:
+            target_domains = []
+        self.target_domains = set(target_domains)
+
+    def should_suppress(self, url):
+        for domain in self.target_domains:
+            if domain in url:
+                return True
+        return False
     
-# Disable InsecureRequestWarning warnings since uscode.house.gov uses self-signed certificates
-requests.packages.urllib3.disable_warnings(category=urllib3.exceptions.InsecureRequestWarning)
+    def get(self, url, **kwargs):
+        if self.should_suppress(url):
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", InsecureRequestWarning)
+                if 'verify' not in kwargs:
+                    kwargs['verify'] = False
+                return requests.get(url, **kwargs)
+        else:
+            return requests.get(url, **kwargs)
+        
+suppressor = SSLWarningSuppressor(target_domains=['uscode.house.gov'])
 
 URL_ATTEMPTS_MAX = 20
 
@@ -68,17 +91,17 @@ def getAndUnzipURL(
                 title = '0' + title
             print('Getting title: ' + title)
             url = re.sub(r"_usc.*@", "_usc" + title + "@", url)
-            r = requests.get(url, stream=True, verify=False)
+            r = suppressor.get(url, stream=True, verify=False)
             check = zipfile.is_zipfile(io.BytesIO(r.content))
             attempts = 0
             while not check:
                 print('Trying to get url...')
                 if url.find('u1.zip') > 0:
                     url2 = url.replace('u1.zip', '.zip')
-                    r = requests.get(url2, stream=True, verify=False)
+                    r = suppressor.get(url2, stream=True, verify=False)
                     check = zipfile.is_zipfile(io.BytesIO(r.content))
                 if not check:
-                    r = requests.get(url, stream=True, verify=False)
+                    r = suppressor.get(url, stream=True, verify=False)
                     check = zipfile.is_zipfile(io.BytesIO(r.content))
                 attempts += 1
                 if attempts == URL_ATTEMPTS_MAX:
@@ -142,7 +165,7 @@ def getUSCReleasePoints(writeToFile: bool = True):
     """
 
     # Turn off certificate verification since uscode.house.gov uses self-signed certificates
-    current_usc_html_resp = requests.get(
+    current_usc_html_resp = suppressor.get(
         USC_HTML_PAGE_BASE + CURRENT_USC_HTML_PAGE, verify=False
     )
     if current_usc_html_resp.status_code == 200:
@@ -187,7 +210,7 @@ def getUSCReleasePoints(writeToFile: bool = True):
         'url': USC_HTML_PAGE_BASE + downloadlink,
     }
 
-    usc_html_resp = requests.get(USC_HTML_PAGE_BASE + USC_HTML_PAGE, verify=False)
+    usc_html_resp = suppressor.get(USC_HTML_PAGE_BASE + USC_HTML_PAGE, verify=False)
     if usc_html_resp.status_code == 200:
         soup = BeautifulSoup(usc_html_resp.content, features="lxml")
     else:
