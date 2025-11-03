@@ -27,6 +27,5 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "License :: None",
         "Operating System :: OS Independent",
-        ['loadusc.loadusc'],
     ],
 )
